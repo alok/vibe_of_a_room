@@ -1,0 +1,22 @@
+[build-system]
+requires = [ "poetry-core",]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "vibe-of-a-room"
+version = "0.1.0"
+description = ""
+authors = [ "Alok Singh <alokbeniwal@gmail.com>",]
+readme = "README.md"
+[[tool.poetry.packages]]
+include = "vibe_of_a_room"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.24.2"
+torch = "^2.0.0"
+torchaudio = "^2.0.1"
+
+[tool.poetry.dependencies.scipy]
+python = ">3.10,<3.12"
+version = "^1"
