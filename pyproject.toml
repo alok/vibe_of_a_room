@@ -20,3 +20,7 @@ torchaudio = "^2.0.1"
 [tool.poetry.dependencies.scipy]
 python = ">3.10,<3.12"
 version = "^1"
+
+[tool.poetry.group.dev.dependencies]
+pudb = "^2022.1.3"
+
