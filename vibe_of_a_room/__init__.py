@@ -18,22 +18,23 @@ def main():
     )
     args = parser.parse_args()
 
+    args.output_directory.mkdir(parents=True, exist_ok=True)
+
     waveform, SAMPLE_RATE = torchaudio.load(args.input_file)
 
     # Compute the spectrogram
-    spectrogram = Spectrogram()(waveform).squeeze().numpy()
+    spectrogram = Spectrogram(power=None)(waveform).squeeze()
+    print(spectrogram)
+    # spectrogram = Spectrogram()(waveform).squeeze()
+    print(f'{spectrogram.shape=}')
 
     # Perform Helmholtz decomposition on the spectrogram
     curl_free, div_free = helmholtz_decomposition(spectrogram)
     # TODO include the harmonic component
 
     # Convert the decomposed spectrograms back to waveforms
-    curl_free_waveform = spectrogram_to_waveform(
-        curl_free, waveform.shape[0], SAMPLE_RATE
-    )
-    div_free_waveform = spectrogram_to_waveform(
-        div_free, waveform.shape[0], SAMPLE_RATE
-    )
+    curl_free_waveform = spectrogram_to_waveform(curl_free, waveform.shape[0])
+    div_free_waveform = spectrogram_to_waveform(div_free, waveform.shape[0])
 
     # Save the resulting files
     torchaudio.save(
@@ -44,6 +45,7 @@ def main():
     )
 
 
+# TODO helmholtz decomposition
 def helmholtz_decomposition(spectrogram):
     # TODO verify time and frequency axis
     # Calculate the gradients along time (axis=1) and frequency (axis=0)
