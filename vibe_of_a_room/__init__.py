@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchaudio
@@ -22,11 +23,27 @@ def main():
 
     waveform, SAMPLE_RATE = torchaudio.load(args.input_file)
 
-    # Compute the spectrogram
-    spectrogram = Spectrogram(power=None)(waveform).squeeze()
-    print(spectrogram)
-    # spectrogram = Spectrogram()(waveform).squeeze()
-    print(f'{spectrogram.shape=}')
+    def plot_waveform(waveform, sample_rate):
+        waveform = waveform.numpy()
+
+        num_channels, num_frames = waveform.shape
+        time_axis = torch.arange(0, num_frames) / sample_rate
+
+        figure, axes = plt.subplots(num_channels, 1)
+        if num_channels == 1:
+            axes = [axes]
+        for c in range(num_channels):
+            axes[c].plot(time_axis, waveform[c], linewidth=1)
+            axes[c].grid(True)
+            if num_channels > 1:
+                axes[c].set_ylabel(f"Channel {c+1}")
+        figure.suptitle("waveform")
+        plt.show(block=False)
+
+    # TODO qt bindings don't load
+    # plot_waveform(waveform, SAMPLE_RATE)
+    print(waveform.shape)
+    NUM_CHANNELS, NUM_FRAMES = waveform.shape
 
     # Perform Helmholtz decomposition on the spectrogram
     curl_free, div_free = helmholtz_decomposition(spectrogram)
