@@ -10,3 +10,10 @@ Idea: Split 1 audio file into 3, corresponding to the 3 pieces of the Hodge deco
 
 TODO elaborate hodge and how helmholtz works too in this case.
 
+
+Use torchaudio to load 1 audio file, call it `input`. `input` should be turned
+into a (possibly complex) vector field. Elaborate how this is done, then implement
+it.
+
+
+Elaborate how the Helmholtz or Hodge decomposition works, then implement it.
