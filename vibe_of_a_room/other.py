@@ -130,8 +130,9 @@ def save_harmonic_wav(
     harmonic_y,
 ) = helmholtz_decomposition(gradient_time, gradient_freq)
 
-# Combine the harmonic components to form the harmonic spectrogram
-harmonic_spectrogram = jnp.sqrt(harmonic_x**2 + harmonic_y**2)
+# TODO how to combine?
+# harmonic_spectrogram = jnp.sqrt(harmonic_x**2 + harmonic_y**2)
+harmonic_spectrogram = harmonic_x + harmonic_y
 
 # Save the harmonic part as a new WAV file
 save_harmonic_wav(
