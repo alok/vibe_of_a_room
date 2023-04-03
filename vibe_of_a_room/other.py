@@ -27,10 +27,10 @@ OVERLAP: int = WINDOW_SIZE // 2
 
 def load_wav_and_compute_spectrogram(file_path, window_size, overlap):
     data, samplerate = sf.read(file_path)
-    data = jnp.array(data.T[0])
-    print(data.shape)
+    data = jnp.array(data)
     _, _, spectrogram_data = jax.scipy.signal.stft(
-        data, samplerate, nperseg=window_size, noverlap=overlap
+        data,
+        samplerate,  # nperseg=window_size, noverlap=overlap
     )
     print(spectrogram_data.shape)
     return spectrogram_data, samplerate
@@ -43,7 +43,7 @@ spectrogram_data, samplerate = load_wav_and_compute_spectrogram(
 
 # Compute the gradient of the spectrogram data
 # gradient_y, gradient_x = jnp.gradient(spectrogram_data)
-gradient_time, gradient_freq = jnp.gradient(spectrogram_data)
+_, gradient_time, gradient_freq = jnp.gradient(spectrogram_data, axis=(1, 2))
 
 
 def helmholtz_decomposition(gradient_x, gradient_y):
