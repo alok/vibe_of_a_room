@@ -10,10 +10,13 @@ Idea: Split 1 audio file into 3, corresponding to the 3 pieces of the Hodge deco
 
 TODO elaborate hodge and how helmholtz works too in this case.
 
+If Hodge is too hard, use Helmholtz and included the poloidal and toroidal split.
 
-Use torchaudio to load 1 audio file, call it `input`. `input` should be turned
-into a (possibly complex) vector field. Elaborate how this is done, then implement
-it.
-
+Use torchaudio to load 1 audio file, call it `input`. It will have 2 channels and thousands of samples, with a shape of `2,?`. How to turn the `input` complex dtpye tensor into a complex vector field? Elaborate how this is done, then implement it in Python.
 
 Elaborate how the Helmholtz or Hodge decomposition works, then implement it.
+
+Account for the negative-definite signature of the time dimension, because it *is* timelike.
+
+Implement all this in Python, using Python 3.10+. Include type annotations,
+pathlib, and other modern niceties.

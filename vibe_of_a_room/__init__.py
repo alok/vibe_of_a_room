@@ -1,3 +1,4 @@
+# %%
 import argparse
 from pathlib import Path
 
@@ -8,58 +9,81 @@ import torchaudio
 from scipy.signal import convolve
 from torchaudio.transforms import Spectrogram
 
+# glue first and last moment together to give a sphere?
+# first moment follows last in endless loop
+# %%
+# arg
+parser = argparse.ArgumentParser(
+    description="Perform Helmholtz decomposition on the spectrogram of an audio file."
+)
+parser.add_argument("input_file", type=Path, help="Path to the input audio file.")
+parser.add_argument("output_directory", type=Path, help="Path to the output directory.")
+args = parser.parse_args()
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Perform Helmholtz decomposition on the spectrogram of an audio file."
+args.output_directory.mkdir(parents=True, exist_ok=True)
+
+waveform, SAMPLE_RATE = torchaudio.load(args.input_file)
+NUM_CHANNELS, NUM_FRAMES = waveform.shape
+print(f"{waveform.shape=}")
+print(f"{waveform.dtype=}")
+
+spectrogram = Spectrogram(power=True)(waveform)
+print(spectrogram.shape)  # [2, 201, 62469]
+single_spec = spectrogram[0]
+# XXX 11:17 using only 1 channel
+print(single_spec.shape)  # [1, 201, 62469]
+grad_time, grad_freq = np.gradient(single_spec)
+print(grad_time.shape)
+assert grad_time.shape == single_spec.shape
+
+
+def spectrogram_to_waveform(spectrogram):
+    istft_transform = torchaudio.transforms.InverseSpectrogram(
+        n_fft=400,
+        hop_length=200,
     )
-    parser.add_argument("input_file", type=Path, help="Path to the input audio file.")
-    parser.add_argument(
-        "output_directory", type=Path, help="Path to the output directory."
-    )
-    args = parser.parse_args()
+    waveform = istft_transform(torch.tensor(spectrogram).unsqueeze(0))#.clamp_(-1, 1)
+    return waveform
 
-    args.output_directory.mkdir(parents=True, exist_ok=True)
 
-    waveform, SAMPLE_RATE = torchaudio.load(args.input_file)
+def plot_waveform(waveform, sample_rate):
+    waveform = waveform.numpy()
 
-    def plot_waveform(waveform, sample_rate):
-        waveform = waveform.numpy()
+    time_axis = torch.arange(NUM_FRAMES) / sample_rate
 
-        num_channels, num_frames = waveform.shape
-        time_axis = torch.arange(0, num_frames) / sample_rate
+    figure, axes = plt.subplots(NUM_CHANNELS, 1)
+    if NUM_CHANNELS == 1:
+        axes = [axes]
+    for c in range(NUM_CHANNELS):
+        axes[c].plot(time_axis, waveform[c], linewidth=1)
+        axes[c].grid(True)
+        if NUM_CHANNELS > 1:
+            axes[c].set_ylabel(f"Channel {c+1}")
+    figure.suptitle("waveform")
+    plt.show(block=False)
 
-        figure, axes = plt.subplots(num_channels, 1)
-        if num_channels == 1:
-            axes = [axes]
-        for c in range(num_channels):
-            axes[c].plot(time_axis, waveform[c], linewidth=1)
-            axes[c].grid(True)
-            if num_channels > 1:
-                axes[c].set_ylabel(f"Channel {c+1}")
-        figure.suptitle("waveform")
-        plt.show(block=False)
 
-    # TODO qt bindings don't load
-    # plot_waveform(waveform, SAMPLE_RATE)
-    print(waveform.shape)
-    NUM_CHANNELS, NUM_FRAMES = waveform.shape
+# TODO qt bindings don't load
+# plot_waveform(waveform, SAMPLE_RATE)
 
-    # Perform Helmholtz decomposition on the spectrogram
-    curl_free, div_free = helmholtz_decomposition(spectrogram)
-    # TODO include the harmonic component
+# Perform Helmholtz decomposition on the spectrogram
+# curl_free, div_free = helmholtz_decomposition(spectrogram)
+# TODO include the harmonic component
 
-    # Convert the decomposed spectrograms back to waveforms
-    curl_free_waveform = spectrogram_to_waveform(curl_free, waveform.shape[0])
-    div_free_waveform = spectrogram_to_waveform(div_free, waveform.shape[0])
-
-    # Save the resulting files
-    torchaudio.save(
-        args.output_directory / "curl_free.wav", curl_free_waveform, SAMPLE_RATE
-    )
-    torchaudio.save(
-        args.output_directory / "div_free.wav", div_free_waveform, SAMPLE_RATE
-    )
+# Convert the decomposed spectrograms back to waveforms
+# curl_free_waveform = spectrogram_to_waveform(curl_free, waveform.shape[0])
+# div_free_waveform = spectrogram_to_waveform(div_free, waveform.shape[0])
+# split div_free_waveform into poloidal and toroidal components
+# Save the resulting files
+torchaudio.save(
+    args.output_directory / "curl_free.wav", curl_free_waveform, SAMPLE_RATE
+)
+torchaudio.save(args.output_directory / "div_free.wav", div_free_waveform, SAMPLE_RATE)
+torchaudio.save(
+    args.output_directory / "harmonic.wav",
+    waveform,
+    SAMPLE_RATE,
+)
 
 
 # TODO helmholtz decomposition
@@ -86,14 +110,5 @@ def helmholtz_decomposition(spectrogram):
     return curl_free, div_free
 
 
-def spectrogram_to_waveform(spectrogram, num_channels):
-    istft_transform = torchaudio.transforms.InverseSpectrogram(
-        n_fft=400,
-        n_hop=200,
-    )
-    waveform = istft_transform(torch.tensor(spectrogram).unsqueeze(0)).clamp_(-1, 1)
-    return waveform[:num_channels]
 
-
-if __name__ == "__main__":
-    main()
+# TODO multiple channels
