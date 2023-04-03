@@ -1,6 +1,9 @@
-import jax
-from pathlib import Path
 import argparse
+import random
+from pathlib import Path
+from random import randint
+
+import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -136,5 +139,9 @@ harmonic_spectrogram = harmonic_x + harmonic_y
 
 # Save the harmonic part as a new WAV file
 save_harmonic_wav(
-    harmonic_spectrogram, samplerate, args.output_file / 'harmonic.wav', WINDOW_SIZE, OVERLAP
+    harmonic_spectrogram,
+    samplerate,
+    args.output_file / f"harmonic{randint(1,10**6)}.wav",
+    WINDOW_SIZE,
+    OVERLAP,
 )
