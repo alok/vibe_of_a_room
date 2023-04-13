@@ -1,4 +1,3 @@
-import tyro
 import argparse
 import itertools
 import random
@@ -10,6 +9,7 @@ from typing import Final, Literal
 import torch
 import torch.nn.functional as F
 import torchaudio
+import tyro
 from einops import einsum, pack, rearrange, reduce, repeat, unpack
 from einops.layers.torch import Rearrange, Reduce
 from jaxtyping import Float, Integer
@@ -65,35 +65,29 @@ def main(input_file: Path):
 def hodge_decomposition(
     vector_field: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    # Compute divergence
-    div = torch.zeros_like(vector_field)
-    div[1:, :] += vector_field[1:, :] - vector_field[:-1, :]
-    div[:, 1:] += vector_field[:, 1:] - vector_field[:, :-1]
-    print(f'{div.shape=}')
-# [1025, 12201]
-    # Compute curl
-    curl = torch.zeros_like(vector_field)
+    vf = vector_field
+
+    # TODO div = (V[r+1,c] - V[r,c] + V[r,c+1] - V[r,c])/2 where V
+    div = torch.zeros_like(vf)
+    div[1:, :] += vf[1:, :] - vf[:-1, :]
+    div[:, 1:] += vf[:, 1:] - vf[:, :-1]
+    print(f"{div.shape=}")  # [1025, 12201]
+
+    curl = torch.zeros_like(vf)
     print(f"{curl.shape = }")
-    print(f'{vector_field[:-1, 1:].shape=}')
-    print(f'{vector_field[:-1, :-1].shape=}')
-    print(f'{curl[-1:, :].shape=}')
-    curl[-1:, :] -= vector_field[:-1, 1:] - vector_field[:-1, :-1]
-    curl[:, -1:] += vector_field[1:, :-1] - vector_field[:-1, :-1]
+    print(f"{vf[:-1, 1:].shape=}")
+    print(f"{vf[:-1, :-1].shape=}")
+    print(f"{curl[-1:, :].shape=}")
+    curl[-1:, :] -= vf[:-1, 1:] - vf[:-1, :-1]
+    curl[:, -1:] += vf[1:, :-1] - vf[:-1, :-1]
 
-    # Compute Laplacian
-    laplacian = torch.zeros_like(vector_field)
-    laplacian[1:-1, :] += (
-        vector_field[2:, :] - 2 * vector_field[1:-1, :] + vector_field[:-2, :]
-    )
-    laplacian[:, 1:-1] += (
-        vector_field[:, 2:] - 2 * vector_field[:, 1:-1] + vector_field[:, :-2]
-    )
+    laplacian = torch.zeros_like(vf)
+    laplacian[1:-1, :] += vf[2:, :] - 2 * vf[1:-1, :] + vf[:-2, :]
+    laplacian[:, 1:-1] += vf[:, 2:] - 2 * vf[:, 1:-1] + vf[:, :-2]
 
-    # Compute harmonic component
     harmonic = laplacian / 4
 
-    # Compute divergence-free and curl-free components
-    div_free = vector_field - harmonic
+    div_free = vf - harmonic
     curl_free = div_free - curl
 
     return div_free, curl_free, harmonic
@@ -118,6 +112,18 @@ def save_component_as_wav(
     torchaudio.save(output_file, component_waveform, sample_rate)
 
 
+def div(vec_field: torch.Tensor) -> torch.Tensor:
+    vf = vec_field
+    div = (vf[1:, :] - vf[:-1, :] + vf[:, 1:] - vf[:, :-1]) / 2
+    return div
+
+def test_div() -> bool:
+    vf = torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    assert div(vf).shape == (2, 2)
+    assert torch.allclose(div(vf), torch.tensor([[2, 2], [2, 2]]))
+    return True
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Compute the vibe of a room using Hodge decomposition"
@@ -125,5 +131,6 @@ if __name__ == "__main__":
     parser.add_argument("input_file", type=Path, help="Path to the input audio file")
     parser.add_argument("output_dir", type=Path, help="Path to output folder.")
     args = parser.parse_args()
+    test_div()
 
     main(args.input_file)
