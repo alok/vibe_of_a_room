@@ -11,3 +11,12 @@ Use Python 3.10+, type annotations, argparse, and Pathlib for file handling. Use
 Elaborate how the Helmholtz or Hodge decomposition works, then implement it. If Hodge is too hard, use Helmholtz and include the poloidal/toroidal split.
 
 Output the code as a single block, with comments. The code should be self-contained, and not require any external files. You may assume any useful libraries.
+
+## How to run
+
+Input is a WAV file, output is a directory, containing WAV files for each piece.
+
+```bash
+poetry install
+poetry run python main.py $INPUT.wav  $OUTPUT_DIR
+```
