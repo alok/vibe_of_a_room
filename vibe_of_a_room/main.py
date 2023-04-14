@@ -18,6 +18,8 @@ from torch import Tensor
 from torch import Tensor as T
 from torch import jit, nn, vmap
 
+default_args = ["data/24-7.wav", "data/output/"]
+
 
 def main(input_file: Path):
     # Load audio file
@@ -117,19 +119,33 @@ def div(vec_field: torch.Tensor) -> torch.Tensor:
     div = (vf[1:, :] - vf[:-1, :] + vf[:, 1:] - vf[:, :-1]) / 2
     return div
 
+
 def test_div() -> bool:
     vf = torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     assert div(vf).shape == (2, 2)
     assert torch.allclose(div(vf), torch.tensor([[2, 2], [2, 2]]))
     return True
 
+# -abc = -a -b -c
+# --abc 
+# abc
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Compute the vibe of a room using Hodge decomposition"
     )
-    parser.add_argument("input_file", type=Path, help="Path to the input audio file")
-    parser.add_argument("output_dir", type=Path, help="Path to output folder.")
+    parser.add_argument(
+        "--input_file",
+        type=Path,
+        help="Path to the input audio file",
+        default=default_args[0],
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        help="Path to output folder.",
+        default=default_args[1],
+    )
     args = parser.parse_args()
     test_div()
 
