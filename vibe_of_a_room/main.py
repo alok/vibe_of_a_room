@@ -1,3 +1,4 @@
+# %%
 import argparse
 import itertools
 import random
@@ -17,8 +18,7 @@ from torch import LongTensor as LT
 from torch import Tensor
 from torch import Tensor as T
 from torch import jit, nn, vmap
-
-default_args = ["data/24-7.wav", "data/output/"]
+from dataclasses import dataclass
 
 
 def main(input_file: Path):
@@ -126,27 +126,19 @@ def test_div() -> bool:
     assert torch.allclose(div(vf), torch.tensor([[2, 2], [2, 2]]))
     return True
 
+
 # -abc = -a -b -c
-# --abc 
+# --abc
 # abc
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Compute the vibe of a room using Hodge decomposition"
-    )
-    parser.add_argument(
-        "--input_file",
-        type=Path,
-        help="Path to the input audio file",
-        default=default_args[0],
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=Path,
-        help="Path to output folder.",
-        default=default_args[1],
-    )
-    args = parser.parse_args()
-    test_div()
 
+@dataclass
+class Args:
+    input_file: Path = Path("data/24-7.wav")
+    output_dir: Path = Path("data/output/")
+
+
+if __name__ == "__main__":
+    args = Args()
+    test_div()
     main(args.input_file)
